@@ -1,4 +1,5 @@
-// oled pin = scl:A5 sda:A4
+// oled 
+// pin: scl(A5) sda(A4)
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
@@ -26,8 +27,9 @@ RotaryEncoder enc(2, 3, 4, EncRotate, EncPush);
 
 // internal val
 int led = 13;
-bool isUpdate = false;
-char text[][128] =
+bool isUpdate = true;
+
+char text[][10] =
 {
   "AutoPilot", // max 9 char
   "Audio",
@@ -47,7 +49,8 @@ enum MODE
   MODE_MAX
 };
 int modeIndex = 0;
-String encval;
+int showMenu = 0; // 0 menu, 1 sub
+char encval2[10] = "";
 
 #include "ClientEvents.h"
 
@@ -60,7 +63,7 @@ void setup() {
   delay(1000);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.display();
-  display.clearDisplay();
+  delay(1000);
 }
 
 void loop() {
@@ -70,7 +73,12 @@ void loop() {
   if (isUpdate)
   {
     isUpdate = false;
-    displayText();
+    if (showMenu) {
+      displayMenu();
+    }
+    else {
+      displayText();
+    }
   }
 
   delay(1);
@@ -82,24 +90,64 @@ void displayText()
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
 
-  display.setCursor(10, 0);
-  display.println(text[modeIndex]);
+  display.setCursor(5, 0);
+  display.print(text[modeIndex]);
 
-  display.setCursor(10, 17);
-  display.println(encval);
+  display.setCursor(5, 17);
+  display.print(encval2);
 
   display.display();
 }
 
-void button1Click()
+void displayMenu()
 {
-  modeIndex = (modeIndex + 1) % MODE_MAX;
-  isUpdate = true;
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  char tet[][3] = {
+    "ap", "ad", "c1", "c2", "n1", "n2",
+  };
+  int index = 0;
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 3; j++) {
+      int x = j * 39 + 5;
+      int y = i * 17;
+      display.setCursor(x, y);
+      if (index == modeIndex) {
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      }
+      else {
+        display.setTextColor(SSD1306_WHITE);
+      }
+      display.print(tet[index]);
+      index++;
+    }
+  }
+
+  display.display();
 }
 
 
+void button1Click()
+{
+  showMenu = !showMenu;
+  isUpdate = true;
+}
+
+void MenuRotate(int dir) {
+  modeIndex = (modeIndex + MODE_MAX + dir) %  MODE_MAX;
+  isUpdate = true;
+}
+
 void EncRotate(int dir)
 {
+  if (showMenu) {
+    MenuRotate(dir);
+    return;
+  }
+  
   int key = -1;
   bool alt = dir > 0;
 
@@ -132,6 +180,8 @@ void EncRotate(int dir)
     Serial.write(key);
   }
 
+  sprintf(encval2, "value:%d", dir);
+  isUpdate = true;
 }
 
 void EncPush()

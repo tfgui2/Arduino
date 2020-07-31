@@ -9,8 +9,8 @@
 class RotaryEncoder {
   public:
     RotaryEncoder(uint8_t clk, uint8_t dt, uint8_t sw, void (*rotate)(int direction), void (*click)()) {
-      m_pin1 = clk;
-      m_pin2 = dt;
+      m_pin1 = dt;
+      m_pin2 = clk;
       pinMode(m_pin1, INPUT_PULLUP);
       pinMode(m_pin2, INPUT_PULLUP);
       onRotate = rotate;
