@@ -1,6 +1,7 @@
 
 enum CLIENT_EVENTS
 {
+  NONE,
 
   // com 1
   COM_RADIO_WHOLE_DEC,
